@@ -42,6 +42,23 @@ CMD ["echo", "test"]
 ```
 **Answer:** Runs `ls echo test` — lists files named `echo` and `test`, which don't exist, so outputs error: `No such file or directory`
 
+**Q: You have a 10-line Dockerfile and a 20-line Dockerfile — which do you prefer and why?**
+
+- Prefer the **10-line** Dockerfile — but only if it follows best practices correctly
+- Fewer `RUN` instructions = fewer layers = smaller image
+- Chain commands with `&&` to reduce layers: `RUN apt-get update && apt-get install -y curl && rm -rf /var/lib/apt/lists/*`
+- A bad 10-line (single-stage, bloated base) is worse than a good 20-line multi-stage
+- **Real answer:** Line count is secondary — what matters is image size, security, cache efficiency, and readability
+
+| Priority | What Matters |
+|---|---|
+| Fewer layers | Chain `RUN` commands with `&&` |
+| Small base image | Use `alpine` or `distroless` |
+| Multi-stage | Discard build tools from final image |
+| Cache order | Copy `package.json` before source code |
+| Non-root user | Security best practice |
+| `.dockerignore` | Exclude `node_modules`, `.git` |
+
 ---
 
 ## 4. Terraform
@@ -202,3 +219,135 @@ spec:
 | HTTP Request | Browser requests page | HTTP/2 or HTTP/3 |
 | CDN / Load Balancer | Routes to nearest server | — |
 | Response + Render | HTML/CSS/JS parsed & displayed | — |
+
+---
+
+## 11. Linux — File Permissions
+
+**Q: What is chmod 753 and chmod 755?**
+
+chmod uses octal notation: **Owner | Group | Others** (4=read, 2=write, 1=execute)
+
+| chmod | Owner | Group | Others | Symbolic |
+|---|---|---|---|---|
+| `755` | rwx (7) | r-x (5) | r-x (5) | -rwxr-xr-x |
+| `753` | rwx (7) | r-x (5) | -wx (3) | -rwxr-x-wx |
+
+- `755` — owner can read/write/execute; group & others can read & execute. **Most common for scripts and directories.**
+- `753` — others can write & execute but NOT read. Rare in practice.
+
+Common permission values:
+| chmod | Use Case |
+|---|---|
+| `755` | Scripts, directories |
+| `644` | Regular files |
+| `600` | SSH keys, secrets |
+| `400` | Read-only `.pem` files |
+| `777` | ⚠️ Avoid — full access to everyone |
+
+---
+
+## 12. Terraform — Modules
+
+**Q: What are Terraform modules?**
+
+- A **module** is a reusable, self-contained package of Terraform config — like a function in programming
+- Avoids code duplication (DRY) across environments
+- Same module called with different variables for dev/prod
+
+```hcl
+# modules/ec2/main.tf
+resource "aws_instance" "this" {
+  ami           = var.ami
+  instance_type = var.instance_type
+}
+
+# dev/main.tf
+module "web_server" {
+  source        = "../modules/ec2"
+  instance_type = "t2.micro"
+}
+
+# prod/main.tf
+module "web_server" {
+  source        = "../modules/ec2"
+  instance_type = "t3.large"
+}
+```
+
+---
+
+## 13. GitHub Actions
+
+**Q: What is GitHub Actions?**
+
+- CI/CD platform built into GitHub — automates workflows triggered by events (push, PR, schedule)
+- Key concepts: Workflow (YAML file), Trigger (`on:`), Job, Step, Action, Runner
+
+**Q: What types of Actions are used in a project?**
+
+| Action | Purpose |
+|---|---|
+| `actions/checkout@v4` | Checkout code |
+| `actions/setup-node@v4` | Setup Node.js runtime |
+| `docker/build-push-action@v5` | Build & push Docker image |
+| `aws-actions/configure-aws-credentials@v4` | AWS auth via OIDC |
+| `aws-actions/amazon-ecr-login@v2` | Login to ECR |
+| `hashicorp/setup-terraform@v3` | Setup Terraform |
+| `actions/cache@v4` | Cache dependencies |
+| `slackapi/slack-github-action@v1` | Slack notifications |
+
+**Q: What are reusable workflows in GitHub Actions?**
+
+- Define once with `workflow_call` trigger, call from any repo
+- Accepts `inputs` and `secrets` as parameters
+- Eliminates duplicating CI/CD YAML across multiple repos
+
+**Q: What are the stages to deploy an application using GitHub Actions?**
+
+```
+Code Push
+  ↓
+Stage 1: CI — lint, unit tests, SAST scan
+  ↓
+Stage 2: Build Docker image + security scan (Trivy)
+  ↓
+Stage 3: Push image to registry (ECR / JFrog)
+  ↓
+Stage 4: Deploy to Dev/Staging → integration tests
+  ↓
+Stage 5: Manual approval → Deploy to Production
+  ↓
+Stage 6: Notify (Slack / Teams)
+```
+
+**Q: How do you use GitHub Actions in your project?**
+
+- PR raised → `ci.yml` runs lint + tests automatically
+- Merge to `main` → image built, pushed to ECR, deployed to dev
+- QA passes → manual approval in GitHub → deployed to prod
+- Slack notification on success/failure
+
+---
+
+## 14. Cloud Services Used
+
+**Q: What AWS cloud services have you used?**
+
+| Service | Purpose |
+|---|---|
+| EC2 | Virtual machines |
+| EKS | Managed Kubernetes |
+| ECR | Docker image registry |
+| S3 | Object storage (artifacts, state, static assets) |
+| RDS | Managed relational database |
+| IAM | Access management and roles |
+| Secrets Manager | Store and rotate credentials |
+| CloudWatch | Logging, monitoring, alarms |
+| CloudTrail | Audit trail for API calls |
+| VPC | Network isolation |
+| ALB / NLB | Load balancing |
+| Route53 | DNS management |
+| Lambda | Serverless functions |
+| SQS / SNS | Messaging and notifications |
+| GuardDuty | Threat detection |
