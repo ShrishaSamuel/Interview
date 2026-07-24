@@ -23,6 +23,28 @@ awk '{print $NF}' sample.txt
 
 ## 3. Docker
 
+**Q: What is a Docker image?**
+
+- A lightweight, immutable, read-only template used to create containers
+- Contains application code, runtime, libraries, environment variables, and config files
+- Built in layers using a `Dockerfile` and stored in registries (Docker Hub, ECR, JFrog, etc.)
+- Each `RUN`, `COPY`, `ADD` instruction creates a new layer on top of the previous one
+
+**Q: What is containerization?**
+
+- Packaging an application and its dependencies into a single isolated unit (container) that runs consistently across any environment
+- Containers share the host OS kernel — unlike VMs which run a full OS
+- Enables portability: same container runs on dev laptop, CI server, and production
+
+| Feature | Container | VM |
+|---|---|---|
+| Startup | Seconds | Minutes |
+| Size | MBs | GBs |
+| Isolation | Process-level | OS-level |
+| Overhead | Low | High |
+
+---
+
 **Q: Why multi-stage Docker builds?**
 
 - Keeps final image small and secure by separating build environment from runtime environment.
@@ -351,3 +373,104 @@ Stage 6: Notify (Slack / Teams)
 | Lambda | Serverless functions |
 | SQS / SNS | Messaging and notifications |
 | GuardDuty | Threat detection |
+
+---
+
+## 15. Kubernetes — Basics
+
+**Q: What is the difference between a Pod and a Container? How do they work?**
+
+- A **Container** is a running instance of a Docker image — it holds the app process
+- A **Pod** is the smallest deployable unit in Kubernetes; it wraps one or more containers that share the same **network namespace** (IP, ports) and **storage volumes**
+
+```
+Pod
+ ├── Main container (app)
+ └── Sidecar container (e.g., log collector)
+       └── Both share localhost network & volumes
+```
+
+- Kubernetes manages Pods, not containers directly
+- If a container crashes inside a Pod, Kubernetes restarts it within the same Pod
+- Containers in the same Pod communicate via `localhost`; different Pods communicate via Services
+
+| Aspect | Container | Pod |
+|---|---|---|
+| Unit | Docker/OCI image instance | Kubernetes scheduling unit |
+| Networking | Own network stack | Shared network namespace |
+| Managed by | Docker daemon | Kubelet (via API server) |
+| Lifecycle | Independent | All containers start/stop together |
+
+**Q: What is Kubelet?**
+
+- An agent that runs on every **worker node** in a Kubernetes cluster
+- Watches the API server for Pod specs assigned to its node
+- Ensures containers described in those specs are running and healthy
+- Reports node and Pod status back to the control plane
+- Does **not** manage containers not created by Kubernetes
+
+```
+Control Plane (API Server)
+        ↓  Pod spec assigned to node
+    Kubelet (on worker node)
+        ↓  Instructs container runtime
+   Container Runtime (containerd / Docker)
+        ↓
+    Container running inside Pod
+```
+
+---
+
+## 16. CI/CD Troubleshooting
+
+**Q: The CI/CD pipeline passed, but the application is down. How do you investigate?**
+
+**Step-by-step approach:**
+
+1. **Check Pod status:**
+   ```bash
+   kubectl get pods -n <namespace>
+   kubectl describe pod <pod-name> -n <namespace>
+   ```
+2. **Check container logs:**
+   ```bash
+   kubectl logs <pod-name> -n <namespace>
+   kubectl logs <pod-name> --previous   # if pod restarted
+   ```
+3. **Check cluster events:**
+   ```bash
+   kubectl get events -n <namespace> --sort-by='.lastTimestamp'
+   ```
+4. **Check service/ingress routing:**
+   ```bash
+   kubectl get svc,ingress -n <namespace>
+   ```
+5. **Check deployment rollout status:**
+   ```bash
+   kubectl rollout status deployment/<name> -n <namespace>
+   ```
+6. Check **resource limits** — OOMKilled, CPU throttling
+7. Check **config/secrets** — missing env vars, wrong DB connection strings
+8. Check **health/readiness probes** — app may be running but failing probe checks
+
+> Pipeline passing means the **build and deploy succeeded** — it does not guarantee the app is healthy at runtime. Runtime failures (bad config, OOM, DB unreachable) happen after deployment.
+
+---
+
+## 17. Behavioral — Automation
+
+**Q: Have you automated anything?**
+
+**Framework for answering:**
+> "Yes — I automated [specific task] using [tool/script]. The problem was [manual pain point]. I built [what you created], which reduced [time/errors/manual steps] by [X%]."
+
+**Common examples:**
+| What was automated | Tool used |
+|---|---|
+| CI/CD pipelines (build, test, deploy) | GitHub Actions, Jenkins |
+| Infrastructure provisioning | Terraform, Ansible |
+| Auto-scaling policies | Kubernetes HPA/VPA |
+| Security scanning on every PR | Trivy, Snyk in CI |
+| Scheduled cleanup/backup jobs | Shell scripts + cron |
+| Slack/email alerts on deployment | GitHub Actions + Slack webhook |
+| Rotating secrets automatically | AWS Secrets Manager rotation Lambda |
