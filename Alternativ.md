@@ -35,6 +35,10 @@
 
 ## 3. Docker
 
+- What is a Docker image and how is it different from a Docker container?
+- What is containerization and how is it different from virtualisation?
+- What are the advantages of containers over virtual machines?
+- How does a container share the host OS kernel?
 - What is the difference between Docker image and Docker container?
 - What is a Docker volume and when would you use it?
 - How do you reduce Docker image size?
@@ -126,6 +130,15 @@
 
 ## 8. Kubernetes (Bonus — Common in DevOps Interviews)
 
+- What is a Pod in Kubernetes and why does it exist?
+- What is the difference between a Pod and a container?
+- Can a Pod have multiple containers? When would you use that pattern?
+- What is a sidecar container and when would you use one?
+- How do containers inside the same Pod communicate with each other?
+- What is Kubelet and what is its role in a Kubernetes cluster?
+- What does Kubelet do when a container crashes?
+- What is the difference between Kubelet, Kube-proxy, and the API server?
+- What container runtime does Kubelet interact with?
 - What is the difference between a Pod, Deployment, and StatefulSet?
 - What is a Kubernetes Service? Types?
 - How does Kubernetes handle self-healing?
@@ -166,6 +179,13 @@
 
 ## 10. CI/CD — GitHub Actions (Bonus)
 
+- The CI/CD pipeline is green but the app is down — where do you start investigating?
+- How do you check application logs in a Kubernetes cluster?
+- What is the difference between `kubectl logs` and `kubectl describe`?
+- How do you view logs from a previously crashed container?
+- What does `CrashLoopBackOff` mean and how do you debug it?
+- What is the difference between a liveness probe and a readiness probe?
+- How does a passing pipeline not guarantee application health?
 - What is the difference between CI and CD?
 - What is a pipeline as code?
 - How do you handle secrets in a CI/CD pipeline?
@@ -203,3 +223,18 @@
 - What is a NAT Gateway and why is it needed in a private subnet?
 - What is the difference between a Security Group and a NACL?
 - How does AWS IAM OIDC work with GitHub Actions?
+
+---
+
+## 12. Behavioral — Automation
+
+- Have you ever automated a manual process? Walk me through it.
+- What tools have you used for automation?
+- How do you decide what to automate vs what to do manually?
+- Have you written any scripts to reduce toil? What did they do?
+- Describe a time when automation you built saved significant time or prevented a failure.
+- What would you automate first if you joined a new team?
+- How do you test automation scripts before running them in production?
+- Have you used Ansible or other configuration management tools? For what?
+- How have you automated security scanning in your CI/CD pipeline?
+- What is infrastructure as code and have you used it for automation?
